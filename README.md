@@ -1,2 +1,2 @@
-# UW-Digital-Hub-2026
+# uw-digital-hub-2026
 AR Gallery
