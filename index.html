@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -54,9 +54,7 @@
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      webxr="optionalFeatures: "
-      xr-mode-ui="enabled: false">
+      device-orientation-permission-ui="enabled: false">
 
       <a-assets>
         <img id="artwork" src="assets/artwork_target.png" />
@@ -83,49 +81,54 @@
     </div>
 
     <script>
-      const btn = document.getElementById('start-btn');
-      const statusEl = document.getElementById('status');
-      const startScreen = document.getElementById('start-screen');
+      document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('start-btn');
+        const statusEl = document.getElementById('status');
+        const startScreen = document.getElementById('start-screen');
+        const sceneEl = document.querySelector('a-scene');
+        let arSystem;
 
-      function showStatus(msg) {
-        statusEl.textContent = msg;
-      }
+        // Grab arSystem once scene is loaded
+        sceneEl.addEventListener('loaded', function() {
+          arSystem = sceneEl.systems['mindar-image-system'];
+        });
 
-      btn.addEventListener('click', async () => {
-        btn.disabled = true;
-        showStatus('Requesting camera...');
-
-        // Request camera permission from user gesture
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
-          });
-          stream.getTracks().forEach(t => t.stop());
-        } catch(e) {
-          showStatus('Camera denied. Go to Settings → Safari → Camera → Allow, then retry.');
+        // Listen for AR errors
+        sceneEl.addEventListener('arError', function() {
+          statusEl.textContent = 'AR failed. Please try again.';
           btn.disabled = false;
-          return;
-        }
+          startScreen.style.display = 'flex';
+        });
 
-        showStatus('Starting AR...');
-        startScreen.style.display = 'none';
+        btn.addEventListener('click', async function() {
+          btn.disabled = true;
+          statusEl.textContent = 'Requesting camera...';
 
-        const scene = document.querySelector('a-scene');
-
-        const tryStart = () => {
-          const system = scene.systems && scene.systems['mindar-image'];
-          if (system && system.start) {
-            system.start();
-          } else {
-            setTimeout(tryStart, 300);
+          // Request camera permission explicitly from user gesture
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: 'environment' }
+            });
+            stream.getTracks().forEach(t => t.stop());
+          } catch(e) {
+            statusEl.textContent = 'Camera denied. Go to Settings → Safari → Camera → Allow, then retry.';
+            btn.disabled = false;
+            return;
           }
-        };
 
-        if (scene.hasLoaded) {
-          tryStart();
-        } else {
-          scene.addEventListener('loaded', tryStart);
-        }
+          statusEl.textContent = 'Starting AR...';
+          startScreen.style.display = 'none';
+
+          // Start AR using correct system name
+          if (arSystem) {
+            arSystem.start();
+          } else {
+            sceneEl.addEventListener('loaded', function() {
+              arSystem = sceneEl.systems['mindar-image-system'];
+              if (arSystem) arSystem.start();
+            });
+          }
+        });
       });
     </script>
 
