@@ -2,48 +2,42 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-   
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
-      #start-screen {
+      #overlay {
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: black;
+        background: rgba(0,0,0,0.85);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         z-index: 9999;
       }
-      #start-button {
-        padding: 20px 40px;
-        font-size: 22px;
+      #overlay p {
+        color: white;
+        font-family: sans-serif;
+        font-size: 18px;
+        text-align: center;
+        padding: 0 40px;
+        margin-bottom: 30px;
+      }
+      #overlay button {
+        padding: 18px 40px;
+        font-size: 20px;
         background: white;
         border: none;
         border-radius: 10px;
         cursor: pointer;
-        margin-top: 20px;
-      }
-      #start-screen p {
-        color: white;
-        font-family: sans-serif;
-        font-size: 16px;
-        text-align: center;
-        padding: 0 40px;
       }
     </style>
   </head>
   <body>
 
-    <div id="start-screen">
-      <p>Point your camera at the artwork to begin the AR experience</p>
-      <button id="start-button">Tap to Begin</button>
-    </div>
-
     <a-scene
-      mindar-image="imageTargetSrc: targets/artwork.mind; autoStart: false;"
+      mindar-image="imageTargetSrc: targets/artwork.mind;"
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
@@ -67,38 +61,12 @@
 
     </a-scene>
 
-    <script>
-      document.getElementById('start-button').addEventListener('click', async function() {
-        // Request camera permission explicitly from user gesture
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          stream.getTracks().forEach(track => track.stop());
-        } catch(e) {
-          alert('Camera access is required. Please allow camera access and try again.');
-          return;
-        }
-
-        // Hide start screen
-        document.getElementById('start-screen').style.display = 'none';
-
-        // Start MindAR after permission granted
-        const scene = document.querySelector('a-scene');
-        const startWhenReady = () => {
-          const mindar = scene.components['mindar-image'];
-          if (mindar && mindar.startAR) {
-            mindar.startAR();
-          } else {
-            setTimeout(startWhenReady, 300);
-          }
-        };
-
-        if (scene.hasLoaded) {
-          startWhenReady();
-        } else {
-          scene.addEventListener('loaded', startWhenReady);
-        }
-      });
-    </script>
+    <div id="overlay">
+      <p>Point your camera at the artwork to reveal the AR experience</p>
+      <button onclick="document.getElementById('overlay').style.display='none'">
+        Tap to Begin
+      </button>
+    </div>
 
   </body>
 </html>
