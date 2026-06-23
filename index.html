@@ -54,7 +54,9 @@
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false">
+      device-orientation-permission-ui="enabled: false"
+      webxr="optionalFeatures: "
+      xr-mode-ui="enabled: false">
 
       <a-assets>
         <img id="artwork" src="assets/artwork_target.png" />
@@ -93,7 +95,7 @@
         btn.disabled = true;
         showStatus('Requesting camera...');
 
-        // Explicitly request camera permission from user gesture
+        // Request camera permission from user gesture
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'environment' }
@@ -106,18 +108,16 @@
         }
 
         showStatus('Starting AR...');
+        startScreen.style.display = 'none';
 
-        // Wait for A-Frame scene to be ready then start MindAR
         const scene = document.querySelector('a-scene');
 
         const tryStart = () => {
-          const mindar = scene.components && scene.components['mindar-image'];
-          if (mindar && typeof mindar.startAR === 'function') {
-            startScreen.style.display = 'none';
-            mindar.startAR();
+          const system = scene.systems && scene.systems['mindar-image'];
+          if (system && system.start) {
+            system.start();
           } else {
-            showStatus('Loading... please wait');
-            setTimeout(tryStart, 500);
+            setTimeout(tryStart, 300);
           }
         };
 
